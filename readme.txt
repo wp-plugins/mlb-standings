@@ -30,6 +30,16 @@ To display vi template tag add the following line of code to the place you'd lik
 = 1.0 =
 * Initial release.
 
+== Frequently Asked Questions ==
+
+== Upgrade Notice ==
+
+== Screenshots ==
+
+1. The setting page.
+2. The front end.
+
+
 == Options ==
 There is only one setting for this plugin: Division. This can be one of the following:
 <ul>
