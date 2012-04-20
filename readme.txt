@@ -9,7 +9,7 @@ Stable tag: 1.0
 This plugin adds the ability to display the standings for a division of <a href="http://mlb.com" target="_blank">Major League Baseball (MLB)</a> via a sidebar widget or template tag.
 
 == Description ==
-This plugin adds the ability to display the standings for a division of <a href="http://mlb.com" target="_blank">Major League Baseball (MLB)</a> via a sidebar widget or template tag.
+This plugin adds the ability to display the standings for a division of <a href="http://mlb.com" target="_blank">Major League Baseball (MLB)</a> via a sidebar widget or template tag. Standings are derived from and XML file published daily at erikberg.com.
 
 == Installation ==
 1. Download the .zip archive (link below) and extract.
