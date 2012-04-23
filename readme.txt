@@ -24,7 +24,7 @@ To display via sidebar widget:
 1. Enter a title for the widget and click the 'Save' button on the bottom of the widget.</li>
 
 To display vi template tag add the following line of code to the place you'd like the standings to be displayed:
-`<?php if(function_exists(ShowMLBStandings2)) : ShowMLBStandings2(); endif; ?>`
+`<?php if(function_exists(ShowMLBStandings)) : ShowMLBStandings(); endif; ?>`
 
 == Changelog ==
 = 1.0 =
