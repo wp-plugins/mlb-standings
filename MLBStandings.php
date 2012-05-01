@@ -44,8 +44,12 @@ function ShowMLBStandings() {
 			<?php
 			echo "<table><tr><th align='left'>Team</th><th align='right'>W</th><th align='right'>L</th><th align='right'>Pct.</th><th align='right'>GB</th></tr>";
 			for ($j = 0; $j < count($division[$x]->team); $j++) {
-				echo "<tr>";
-				echo "<td>".$division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->wins."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->losses."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->{'winning-percentage'}."</td>";
+				//echo "<tr>";
+				if ($division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last == "Mets") {
+					echo "<tr class='team'><td align='left'>".$division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->wins."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->losses."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->{'winning-percentage'}."</td>";
+				} else {
+					echo "<tr><td align='left'>".$division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->wins."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->losses."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->{'winning-percentage'}."</td>";
+				}
 				if ($j=='0'){
 					echo "<td align='center'> - </td>";
 				} else {
@@ -60,7 +64,8 @@ function ShowMLBStandings() {
 			$temptime=$time_hour.":".$time_minute.":".$time_seconds;
 			putenv("TZ=US/Pacific");
 			$time=date("g:i A T", mktime($time_hour,$time_minute,$time_seconds));			
-			echo "<p style='font-size:70%;'>Last updated: ".substr(get_option('timestamp'),5,2)."/".substr(get_option('timestamp'),8,2)."/".substr(get_option('timestamp'),0,4)." - ".$time."</p></div>";
+			//echo "<p style='font-size:70%;'>Last updated: ".substr(get_option('timestamp'),5,2)."/".substr(get_option('timestamp'),8,2)."/".substr(get_option('timestamp'),0,4)." - ".$time."</p></div>";
+			echo "<p class='date'>Last updated: ".substr(get_option('timestamp'),5,2)."/".substr(get_option('timestamp'),8,2)."/".substr(get_option('timestamp'),0,4)."</p></div>";
 		}
 	}
 }
