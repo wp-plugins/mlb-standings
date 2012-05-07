@@ -58,14 +58,11 @@ function ShowMLBStandings() {
 				}
 			}
 			echo "</tr></table>";
-			update_option($options['timestamp'], $xml->{'sports-metadata'}->attributes()->{'date-time'});
-			$time_hour=substr($options['timestamp'],11,2);
-			$time_minute=substr($options['timestamp'],14,2);
-			$time_seconds=substr($options['timestamp'],17,2);
-			$temptime=$time_hour.":".$time_minute.":".$time_seconds;
+			$timestamp = $xml->{'sports-metadata'}->attributes()->{'date-time'};
 			putenv("TZ=US/Pacific");
-			$time=date("g:i A T", mktime($time_hour,$time_minute,$time_seconds));			
-			echo "<p class='date'>Last updated: ".substr($options['timestamp'],5,2)."/".substr($options['timestamp'],8,2)."/".substr($options['timestamp'],0,4)."</p></div>";
+			$time=date("g:i A T", mktime(substr($timestamp,11,2),substr($timestamp,14,2),substr($timestamp,17,2)));			
+			//echo "<p class='date'>Last updated: ".substr($timestamp,5,2)."/".substr($timestamp,8,2)."/".substr($timestamp,0,4)." - ".$time."</p></div>";
+			echo "<p class='date'>Last updated: ".substr($timestamp,5,2)."/".substr($timestamp,8,2)."/".substr($timestamp,0,4)."</p></div>";
 		}
 	}
 }
@@ -89,12 +86,11 @@ add_filter('plugin_action_links', 'MLBStandings_plugin_action_links', 10, 2);
 // Define default option settings
 function MLBStandings_add_defaults() {
 	$tmp = get_option('MLBStandings_options');
-    if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
-		delete_option('MLBStandings_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
+    if(!is_array($tmp)) {
+		//delete_option('MLBStandings_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
 		$arr = array(	"division" => "MLB-NL-E",
 						"team" => "Mets",
-						"timestamp"=>"2006-09-10T04:09:00-07:00",
-						"hour", date('h', time())		);
+						"hour" => date('h', time()));
 		update_option('MLBStandings_options', $arr);
 	}
 }
@@ -151,7 +147,7 @@ function MLBStandings_render_form() {
 			<!-- Each Plugin Option Defined on a New Table Row -->
 			<table class="form-table">
 				<tr>
-					<th scope="row">Division <?php echo ($options['division']); ?></th>
+					<th scope="row">Division</th>
 					<td>
 						<select name='MLBStandings_options[division]' id='mydiv'>
 							<option value='MLB-AL-E' <?php selected('MLB-AL-E', $options['division']); ?>>AL East</option>
@@ -166,72 +162,46 @@ function MLBStandings_render_form() {
 				</tr>
 
 				<tr>
-					<th scope="row">Team <?php echo ($options['team']); ?></th>
+					<th scope="row">Team</th>
 					<td>
-						<select name='MLBStandings_options[team]' id="MLB-AL-E" class="teams">
-							<option value='Orioles' <?php selected('Orioles', $options['team']); ?>>Baltimore Orioles</option>
-							<option value='Red Sox' <?php selected('Red Sox', $options['team']); ?>>Boston Red Sox</option>
-							<option value='Yankees' <?php selected('Yankees', $options['team']); ?>>New York Yankees</option>
-							<option value='Rays' <?php selected('Rays', $options['team']); ?>>Tampa Bay Rays</option>
-							<option value='Blue Jays' <?php selected('Blue Jays', $options['team']); ?>>Toronto Blue Jays</option>
+						<select name='MLBStandings_options[team]' id="teams" class="teams">
 						</select>
-						
-						<select name='MLBStandings_options[team]' id="MLB-AL-C" class="teams">
-							<option value ="White Sox" <?php selected('White Sox', $options['team']); ?>>Chicago White Sox</option>
-							<option value ="Indians" <?php selected('Indians', $options['team']); ?>>Cleveland Indians</option>
-							<option value ="Tigers" <?php selected('Tigers', $options['team']); ?>>Detroit Tigers</option>
-							<option value ="Royals" <?php selected('Royals', $options['team']); ?>>Kansas City Royals</option>
-							<option value ="Twins" <?php selected('Twins', $options['team']); ?>>Minnesota Twins</option>
-						</select>
-						
-						<select name='MLBStandings_options[team]' id="MLB-AL-W" class="teams">
-							<option value ="Angels" <?php selected('Angels', $options['team']); ?>>Los Angeles Angels</option>
-							<option value ="Athletics" <?php selected('Athletics', $options['team']); ?>>Oakland Athletics</option>
-							<option value ="Mariners" <?php selected('Mariners', $options['team']); ?>>Seattle Mariners</option>
-							<option value ="Rangers" <?php selected('Rangers', $options['team']); ?>>Texas Rangers</option>
-						</select>
-						
-						<select name='MLBStandings_options[team]' id="MLB-NL-E" class="teams">
-							<option value ="Braves" <?php selected('Braves', $options['team']); ?>>Atlanta Braves</option>
-							<option value ="Marlins" <?php selected('Marlins', $options['team']); ?>>Miami Marlins</option>
-							<option value ="Mets" <?php selected('Mets', $options['team']); ?>>New York Mets</option>
-							<option value ="Phillies" <?php selected('Phillies', $options['team']); ?>>Philadelphia Phillies</option>
-							<option value ="Nationals" <?php selected('Nationals', $options['team']); ?>>Washington Nationals</option>
-						</select>
-						
-						<select name='MLBStandings_options[team]' id="MLB-NL-C" class="teams">
-							<option value ="Cubs" <?php selected('Cubs', $options['team']); ?>>Chicago Cubs</option>
-							<option value ="Reds" <?php selected('Reds', $options['team']); ?>>Cincinnati Reds</option>
-							<option value ="Astros" <?php selected('Astros', $options['team']); ?>>Houston Astros</option>
-							<option value ="Brewers" <?php selected('Brewers', $options['team']); ?>>Milwaukee Brewers</option>
-							<option value ="Pirates" <?php selected('Pirates', $options['team']); ?>>Pittsburgh Pirates</option>
-							<option value ="Cardinals" <?php selected('Cardinals', $options['team']); ?>>St. Louis Cardinals</option>
-						</select>
-						
-						<select name='MLBStandings_options[team]' id="MLB-NL-W" class="teams">
-							<option value ="Diamondbacks" <?php selected('Diamondbacks', $options['team']); ?>>Arizona Diamondbacks</option>
-							<option value ="Rockies" <?php selected('Rockies', $options['team']); ?>>Colorado Rockies</option>
-							<option value ="Dodgers" <?php selected('Dodgers', $options['team']); ?>>Los Angeles Dodgers</option>
-							<option value ="Padres" <?php selected('Padres', $options['team']); ?>>San Diego Padres</option>
-							<option value ="Giants" <?php selected('Giants', $options['team']); ?>>San Francisco Giants</option>
-						</select>
-
 						<span style="color:#666666;margin-left:2px;">Select the team you'd like bolded in the standings.</span>
 					</td>
 				</tr>
 			</table>
+			<input type="hidden" name='MLBStandings_options[hour]' value=<?php echo date('h', time()); ?>>
 			<p class="submit">
 			<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 			</p>
 		</form>
-
 	</div>
 	
 	<script type='text/javascript'>
 		function teamchanger() {
-			jQuery(".teams").hide();
-			jQuery("#" + jQuery("#mydiv").val()).show();
+			jQuery("#teams").empty()
+			switch(jQuery("#mydiv").val()) {
+				case "MLB-AL-E":
+					jQuery("#teams").append("<option value='Orioles' <?php selected('Orioles', $options['team']); ?>>Baltimore Orioles</option><option value='Red Sox' <?php selected('Red Sox', $options['team']); ?>>Boston Red Sox</option><option value='Yankees' <?php selected('Yankees', $options['team']); ?>>New York Yankees</option><option value='Rays' <?php selected('Rays', $options['team']); ?>>Tampa Bay Rays</option><option value='Blue Jays' <?php selected('Blue Jays', $options['team']); ?>>Toronto Blue Jays</option>");
+					break;
+				case "MLB-AL-C":
+					jQuery("#teams").append("<option value ='White Sox' <?php selected('White Sox', $options['team']); ?>>Chicago White Sox</option><option value ='Indians' <?php selected('Indians', $options['team']); ?>>Cleveland Indians</option><option value ='Tigers' <?php selected('Tigers', $options['team']); ?>>Detroit Tigers</option><option value ='Royals' <?php selected('Royals', $options['team']); ?>>Kansas City Royals</option><option value ='Twins' <?php selected('Twins', $options['team']); ?>>Minnesota Twins</option>");
+					break;
+				case "MLB-AL-W":
+					jQuery("#teams").append("<option value ='Angels' <?php selected('Angels', $options['team']); ?>>Los Angeles Angels</option><option value ='Athletics' <?php selected('Athletics', $options['team']); ?>>Oakland Athletics</option><option value ='Mariners' <?php selected('Mariners', $options['team']); ?>>Seattle Mariners</option><option value ='Rangers' <?php selected('Rangers', $options['team']); ?>>Texas Rangers</option>");
+					break;
+				case "MLB-NL-E":
+					jQuery("#teams").append("<option value ='Braves' <?php selected('Braves', $options['team']); ?>>Atlanta Braves</option><option value ='Marlins' <?php selected('Marlins', $options['team']); ?>>Miami Marlins</option><option value ='Mets' <?php selected('Mets', $options['team']); ?>>New York Mets</option><option value ='Phillies' <?php selected('Phillies', $options['team']); ?>>Philadelphia Phillies</option><option value ='Nationals' <?php selected('Nationals', $options['team']); ?>>Washington Nationals</option>");
+					break;
+				case "MLB-NL-C":
+					jQuery("#teams").append("<option value ='Cubs' <?php selected('Cubs', $options['team']); ?>>Chicago Cubs</option><option value ='Reds' <?php selected('Reds', $options['team']); ?>>Cincinnati Reds</option><option value ='Astros' <?php selected('Astros', $options['team']); ?>>Houston Astros</option><option value ='Brewers' <?php selected('Brewers', $options['team']); ?>>Milwaukee Brewers</option><option value ='Pirates' <?php selected('Pirates', $options['team']); ?>>Pittsburgh Pirates</option><option value ='Cardinals' <?php selected('Cardinals', $options['team']); ?>>St. Louis Cardinals</option>");
+					break;
+				case "MLB-NL-W":
+					jQuery("#teams").append("<option value ='Diamondbacks' <?php selected('Diamondbacks', $options['team']); ?>>Arizona Diamondbacks</option><option value ='Rockies' <?php selected('Rockies', $options['team']); ?>>Colorado Rockies</option><option value ='Dodgers' <?php selected('Dodgers', $options['team']); ?>>Los Angeles Dodgers</option><option value ='Padres' <?php selected('Padres', $options['team']); ?>>San Diego Padres</option><option value ='Giants' <?php selected('Giants', $options['team']); ?>>San Francisco Giants</option>");
+					break;
+			}
 		}
+		
 		jQuery(document).ready(function() {
 			teamchanger()
 			jQuery('#mydiv').change(function(){
