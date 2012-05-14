@@ -11,27 +11,71 @@ Author URI: http://nothing.golddave.com
 /*
 Change Log
 
+1.1
+  * Added option to highlight team in standings.
+  * Added AJAX menu for team selection. Only teams from the selected division will be available in the team select box.
+  * Rewrote settings page to better conform to the Wordpress settings API.
+  * Refactored code to remove unnecesary settings and variables.
+  * Added link to settings page to the MLB Standings listing on the plugin page.
+  * Changed download function to use WP_Http API eliminating dependencay on cURL.
+  * Now saving XML to the database instead of downloading eliminating dependancy on file system.
+  * Now using WP Transients API calls to cache the standings XML data instead of using a custome function.
+  
 1.0
   * First public release.
 */
 
 function ShowMLBStandings() {
 	$options = get_option('MLBStandings_options');
-	$filename = dirname(__FILE__)."/standings.xml";
-	
-	$date = date('h', time());
-	
-	if (($date !== $options['hour']) || (!file_exists($filename))) {
-		update_option($options['hour'], $date);
-		
-		$sourcefile = "http://erikberg.com/mlb/standings.xml";
-		
-		if (!download2($sourcefile, $filename)) {
-			echo "failed to copy $sourcefile...\n";
-		}
+	if (!download2()) {
+		echo "failed to copy $sourcefile...\n";
 	}
 	
-	$xml = simplexml_load_file($filename);
+//	$filename = dirname(__FILE__)."/standings.xml";
+//	
+//	$date = date('h', time());
+//	
+//	$transient = get_transient("standingsxml");
+//	
+//	if (!$transient) {
+//		if (download2($sourcefile, $filename)) {
+//			set_transient("standingsxml", $filename, 60*5); 
+//		}
+//	}
+//	
+//	$transient = $filename;
+	
+//	$xml = get_transient( $transient );
+//	
+//	if ( false === $transient || '' === $transient ){
+//		if (false === $transient) {
+//			echo "false<br>";
+//		}
+//		if ('' === $transient) {
+//			echo "empty<br>";
+//		}
+//		echo "ran<br>";
+//		echo $options['team']."<br>";
+//		if (!download2($sourcefile, $filename)) {
+//			echo "failed to copy $sourcefile...\n";
+//		}
+//		set_transient( $transient, $xml, 120 );
+//	}
+
+	
+//	if (($date !== $options['hour']) || (!file_exists($filename))) {
+//		update_option($options['hour'], $date);
+//		echo "ran<br>";
+//		
+//		$sourcefile = "http://erikberg.com/mlb/standings.xml";
+//		
+//		if (!download2($sourcefile, $filename)) {
+//			echo "failed to copy $sourcefile...\n";
+//		}
+//	}
+	
+	//$xml = simplexml_load_file($filename);
+	$xml = simplexml_load_string($options['xml']);
 	
 	$type = $xml->xpath("//standing/standing-metadata/sports-content-codes/sports-content-code/@code-type");
 	$key = $xml->xpath("//standing/standing-metadata/sports-content-codes/sports-content-code/@code-key");
@@ -90,9 +134,14 @@ function MLBStandings_add_defaults() {
 		//delete_option('MLBStandings_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
 		$arr = array(	"division" => "MLB-NL-E",
 						"team" => "Mets",
-						"hour" => date('h', time()));
+//						"hour" => date('h', time()),
+//						"timestamp" => "Wed, 9 May 2012 11:05:11 GMT",
+						"xml" => "" );
 		update_option('MLBStandings_options', $arr);
 	}
+//	if (!download2()) {
+//		echo "failed to copy $sourcefile...\n";
+//	}
 }
 
 // ------------------------------------------------------------------------------
@@ -105,6 +154,7 @@ function MLBStandings_add_defaults() {
 
 // Init plugin options to white list our options
 function MLBStandings_init(){
+//	register_setting( 'MLBStandings_plugin_options', 'MLBStandings_options', 'validate' );
 	register_setting( 'MLBStandings_plugin_options', 'MLBStandings_options' );
 }
 
@@ -141,6 +191,7 @@ function MLBStandings_render_form() {
 		<!-- Beginning of the Plugin Options Form -->
 		<form method="post" action="options.php">
 			<?php settings_fields('MLBStandings_plugin_options'); ?>
+			<?php if (!download2()) {echo "failed to copy $sourcefile...\n"; }; ?>
 			<?php $options = get_option('MLBStandings_options'); ?>
 
 			<!-- Table Structure Containing Form Controls -->
@@ -164,13 +215,13 @@ function MLBStandings_render_form() {
 				<tr>
 					<th scope="row">Team</th>
 					<td>
-						<select name='MLBStandings_options[team]' id="teams" class="teams">
+						<select name='MLBStandings_options[team]' id="myteam">
 						</select>
 						<span style="color:#666666;margin-left:2px;">Select the team you'd like bolded in the standings.</span>
 					</td>
 				</tr>
 			</table>
-			<input type="hidden" name='MLBStandings_options[hour]' value=<?php echo date('h', time()); ?>>
+			<input type="hidden" name='MLBStandings_options[xml]' value=<?php substr($options['xml'],0,strlen($options['xml'])); ?>>
 			<p class="submit">
 			<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 			</p>
@@ -179,29 +230,28 @@ function MLBStandings_render_form() {
 	
 	<script type='text/javascript'>
 		function teamchanger() {
-			jQuery("#teams").empty()
+			jQuery("#myteam").empty()
 			switch(jQuery("#mydiv").val()) {
 				case "MLB-AL-E":
-					jQuery("#teams").append("<option value='Orioles' <?php selected('Orioles', $options['team']); ?>>Baltimore Orioles</option><option value='Red Sox' <?php selected('Red Sox', $options['team']); ?>>Boston Red Sox</option><option value='Yankees' <?php selected('Yankees', $options['team']); ?>>New York Yankees</option><option value='Rays' <?php selected('Rays', $options['team']); ?>>Tampa Bay Rays</option><option value='Blue Jays' <?php selected('Blue Jays', $options['team']); ?>>Toronto Blue Jays</option>");
+					jQuery("#myteam").append("<option value='Orioles' <?php selected('Orioles', $options['team']); ?>>Baltimore Orioles</option><option value='Red Sox' <?php selected('Red Sox', $options['team']); ?>>Boston Red Sox</option><option value='Yankees' <?php selected('Yankees', $options['team']); ?>>New York Yankees</option><option value='Rays' <?php selected('Rays', $options['team']); ?>>Tampa Bay Rays</option><option value='Blue Jays' <?php selected('Blue Jays', $options['team']); ?>>Toronto Blue Jays</option>");
 					break;
 				case "MLB-AL-C":
-					jQuery("#teams").append("<option value ='White Sox' <?php selected('White Sox', $options['team']); ?>>Chicago White Sox</option><option value ='Indians' <?php selected('Indians', $options['team']); ?>>Cleveland Indians</option><option value ='Tigers' <?php selected('Tigers', $options['team']); ?>>Detroit Tigers</option><option value ='Royals' <?php selected('Royals', $options['team']); ?>>Kansas City Royals</option><option value ='Twins' <?php selected('Twins', $options['team']); ?>>Minnesota Twins</option>");
+					jQuery("#myteam").append("<option value ='White Sox' <?php selected('White Sox', $options['team']); ?>>Chicago White Sox</option><option value ='Indians' <?php selected('Indians', $options['team']); ?>>Cleveland Indians</option><option value ='Tigers' <?php selected('Tigers', $options['team']); ?>>Detroit Tigers</option><option value ='Royals' <?php selected('Royals', $options['team']); ?>>Kansas City Royals</option><option value ='Twins' <?php selected('Twins', $options['team']); ?>>Minnesota Twins</option>");
 					break;
 				case "MLB-AL-W":
-					jQuery("#teams").append("<option value ='Angels' <?php selected('Angels', $options['team']); ?>>Los Angeles Angels</option><option value ='Athletics' <?php selected('Athletics', $options['team']); ?>>Oakland Athletics</option><option value ='Mariners' <?php selected('Mariners', $options['team']); ?>>Seattle Mariners</option><option value ='Rangers' <?php selected('Rangers', $options['team']); ?>>Texas Rangers</option>");
+					jQuery("#myteam").append("<option value ='Angels' <?php selected('Angels', $options['team']); ?>>Los Angeles Angels</option><option value ='Athletics' <?php selected('Athletics', $options['team']); ?>>Oakland Athletics</option><option value ='Mariners' <?php selected('Mariners', $options['team']); ?>>Seattle Mariners</option><option value ='Rangers' <?php selected('Rangers', $options['team']); ?>>Texas Rangers</option>");
 					break;
 				case "MLB-NL-E":
-					jQuery("#teams").append("<option value ='Braves' <?php selected('Braves', $options['team']); ?>>Atlanta Braves</option><option value ='Marlins' <?php selected('Marlins', $options['team']); ?>>Miami Marlins</option><option value ='Mets' <?php selected('Mets', $options['team']); ?>>New York Mets</option><option value ='Phillies' <?php selected('Phillies', $options['team']); ?>>Philadelphia Phillies</option><option value ='Nationals' <?php selected('Nationals', $options['team']); ?>>Washington Nationals</option>");
+					jQuery("#myteam").append("<option value ='Braves' <?php selected('Braves', $options['team']); ?>>Atlanta Braves</option><option value ='Marlins' <?php selected('Marlins', $options['team']); ?>>Miami Marlins</option><option value ='Mets' <?php selected('Mets', $options['team']); ?>>New York Mets</option><option value ='Phillies' <?php selected('Phillies', $options['team']); ?>>Philadelphia Phillies</option><option value ='Nationals' <?php selected('Nationals', $options['team']); ?>>Washington Nationals</option>");
 					break;
 				case "MLB-NL-C":
-					jQuery("#teams").append("<option value ='Cubs' <?php selected('Cubs', $options['team']); ?>>Chicago Cubs</option><option value ='Reds' <?php selected('Reds', $options['team']); ?>>Cincinnati Reds</option><option value ='Astros' <?php selected('Astros', $options['team']); ?>>Houston Astros</option><option value ='Brewers' <?php selected('Brewers', $options['team']); ?>>Milwaukee Brewers</option><option value ='Pirates' <?php selected('Pirates', $options['team']); ?>>Pittsburgh Pirates</option><option value ='Cardinals' <?php selected('Cardinals', $options['team']); ?>>St. Louis Cardinals</option>");
+					jQuery("#myteam").append("<option value ='Cubs' <?php selected('Cubs', $options['team']); ?>>Chicago Cubs</option><option value ='Reds' <?php selected('Reds', $options['team']); ?>>Cincinnati Reds</option><option value ='Astros' <?php selected('Astros', $options['team']); ?>>Houston Astros</option><option value ='Brewers' <?php selected('Brewers', $options['team']); ?>>Milwaukee Brewers</option><option value ='Pirates' <?php selected('Pirates', $options['team']); ?>>Pittsburgh Pirates</option><option value ='Cardinals' <?php selected('Cardinals', $options['team']); ?>>St. Louis Cardinals</option>");
 					break;
 				case "MLB-NL-W":
-					jQuery("#teams").append("<option value ='Diamondbacks' <?php selected('Diamondbacks', $options['team']); ?>>Arizona Diamondbacks</option><option value ='Rockies' <?php selected('Rockies', $options['team']); ?>>Colorado Rockies</option><option value ='Dodgers' <?php selected('Dodgers', $options['team']); ?>>Los Angeles Dodgers</option><option value ='Padres' <?php selected('Padres', $options['team']); ?>>San Diego Padres</option><option value ='Giants' <?php selected('Giants', $options['team']); ?>>San Francisco Giants</option>");
+					jQuery("#myteam").append("<option value ='Diamondbacks' <?php selected('Diamondbacks', $options['team']); ?>>Arizona Diamondbacks</option><option value ='Rockies' <?php selected('Rockies', $options['team']); ?>>Colorado Rockies</option><option value ='Dodgers' <?php selected('Dodgers', $options['team']); ?>>Los Angeles Dodgers</option><option value ='Padres' <?php selected('Padres', $options['team']); ?>>San Diego Padres</option><option value ='Giants' <?php selected('Giants', $options['team']); ?>>San Francisco Giants</option>");
 					break;
 			}
 		}
-		
 		jQuery(document).ready(function() {
 			teamchanger()
 			jQuery('#mydiv').change(function(){
@@ -209,10 +259,18 @@ function MLBStandings_render_form() {
 			});
 		});
 	</script>
-
-
 	<?php	
 }
+
+//function validate($input) {
+//	if (strlen($input['xml']) < 5000) {
+//		delete_transient( "standingsxml" );
+//		if (!download2()) {
+//			echo "failed to copy $sourcefile...\n";
+//		}
+//	}	
+//	return $input;
+//}
 
 // Display a Settings link on the main Plugins page
 function MLBStandings_plugin_action_links( $links, $file ) {
@@ -226,43 +284,90 @@ function MLBStandings_plugin_action_links( $links, $file ) {
 	return $links;
 }
 
-
-
-
-
-
-
-
-
-
-
-function download2($sourcefile, $filename) {
-	// create a new curl resource
-	$ch = curl_init();
+function download2() {
+	$options = get_option('MLBStandings_options');
+	//delete_transient( "standingsxml" );
+	$transient = get_transient("standingsxml");
 	
-	// set URL and other appropriate options
-	curl_setopt($ch, CURLOPT_URL, $sourcefile);
-	curl_setopt($ch, CURLOPT_USERAGENT, 'MLBStandings; (http://golddave.com/)');
-	curl_setopt($ch, CURLOPT_REFERER, get_bloginfo('url'));
-	curl_setopt($ch, CURLOPT_HEADER, false);
-	curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	if ((!$transient) || (!$options['xml']) || (strlen($options['xml'])<5000)) {
+	//if (!$transient) {
+		//echo "download needed";
+		//Include WP_Http class
+		if( !class_exists( 'WP_Http' ) ) include_once( ABSPATH . WPINC. '/class-http.php' );
+		
+		//Set source and destination files
+		$url = "http://erikberg.com/mlb/standings.xml";
+		$filename = dirname(__FILE__)."/standings.xml";
+		
+		//Instantiate the request
+		$request = new WP_Http;
+		
+		//Add parameters for request
+		$args = array();
+		$args['useragent'] = 'MLBStandings; (http://golddave.com/)';
+		$args['referer'] = get_bloginfo('url');
+		//$args['header'] = false;
+		//$args['binarytransfer'] = true;
+		//$args['returntransfer'] = true;
+		$args['timeout'] =  300;
+		//open destination file and add to parameters
+//		$outfile = fopen($filename, 'wb');
+		//$args['file'] = $outfile;
+		
+		//Execute request
+		$result = $request->request($url, $args);
+		//$body = $result[body];
+		
+		//Set XML option to the body of our request
+		if ( $options['xml'] != $result[body] ) {
+			$options['xml'] = $result[body];
+			update_option('MLBStandings_options', $options);
+		}
+		
+		set_transient("standingsxml", $filename, 60*60);
+		
+		//write the body of the file into the destination file and close
+//		fwrite($outfile, $result[body]);
+//		fclose($outfile);
+		
+		//Set XML option to the body of our request
+		//	update_option($options['xml'], $result[body]);
+		
+		//sleep(10);
+	}
 	
-	set_time_limit(300); # 5 minutes for PHP
-	curl_setopt($ch, CURLOPT_TIMEOUT, 300); # and also for CURL
-	
-	$outfile = fopen($filename, 'wb');
-	curl_setopt($ch, CURLOPT_FILE, $outfile);
-	
-	// grab file from URL
-	curl_exec($ch);
-	fclose($outfile);
-	
-	// close CURL resource, and free up system resources
-	curl_close($ch);
-	sleep(10);
+	$transient = $filename;
+
+	//return true so the calling function doesn't return an error
 	return true;
 }
+
+//	// create a new curl resource
+//	$ch = curl_init();
+//	
+//	// set URL and other appropriate options
+//	curl_setopt($ch, CURLOPT_URL, $sourcefile);
+//	curl_setopt($ch, CURLOPT_USERAGENT, 'MLBStandings; (http://golddave.com/)');
+//	curl_setopt($ch, CURLOPT_REFERER, get_bloginfo('url'));
+//	curl_setopt($ch, CURLOPT_HEADER, false);
+//	curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+//	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//	
+//	set_time_limit(300); # 5 minutes for PHP
+//	curl_setopt($ch, CURLOPT_TIMEOUT, 300); # and also for CURL
+//	
+//	$outfile = fopen($filename, 'wb');
+//	curl_setopt($ch, CURLOPT_FILE, $outfile);
+//	
+//	// grab file from URL
+//	curl_exec($ch);
+//	fclose($outfile);
+//	
+//	// close CURL resource, and free up system resources
+//	curl_close($ch);
+//	sleep(10);
+//	return true;
+//}
 
 class MLBStandings_Widget extends WP_Widget {
 
