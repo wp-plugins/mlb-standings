@@ -3,7 +3,7 @@
 Plugin Name: MLB Standings
 Plugin URI: http://nothing.golddave.com/plugins/mlb-standings/
 Description: Displays the standings for a given division of MLB as either a sidebar widget or template tag.
-Version: 1.0
+Version: 2.0
 Author: David Goldstein
 Author URI: http://nothing.golddave.com
 */
@@ -15,11 +15,11 @@ Change Log
   * Added option to highlight team in standings.
   * Added AJAX menu for team selection. Only teams from the selected division will be available in the team select box.
   * Rewrote settings page to better conform to the Wordpress settings API.
-  * Refactored code to remove unnecesary settings and variables.
+  * Refactored code to remove unnecessary settings and variables.
   * Added link to settings page to the MLB Standings listing on the plugin page.
-  * Changed download function to use WP_Http API eliminating dependencay on cURL.
-  * Now saving XML to the database instead of downloading eliminating dependancy on file system.
-  * Now using WP Transients API calls to cache the standings XML data instead of using a custome function.
+  * Changed download function to use WP_Http API eliminating dependency on cURL.
+  * Now saving XML to the database instead of downloading eliminating dependency on file system.
+  * Now using WP Transients API calls to cache the standings XML data instead of using a custom function.
   
 1.0
   * First public release.
@@ -30,56 +30,9 @@ function ShowMLBStandings() {
 	if (!download2()) {
 		echo "failed to copy $sourcefile...\n";
 	}
-	
-//	$filename = dirname(__FILE__)."/standings.xml";
-//	
-//	$date = date('h', time());
-//	
-//	$transient = get_transient("standingsxml");
-//	
-//	if (!$transient) {
-//		if (download2($sourcefile, $filename)) {
-//			set_transient("standingsxml", $filename, 60*5); 
-//		}
-//	}
-//	
-//	$transient = $filename;
-	
-//	$xml = get_transient( $transient );
-//	
-//	if ( false === $transient || '' === $transient ){
-//		if (false === $transient) {
-//			echo "false<br>";
-//		}
-//		if ('' === $transient) {
-//			echo "empty<br>";
-//		}
-//		echo "ran<br>";
-//		echo $options['team']."<br>";
-//		if (!download2($sourcefile, $filename)) {
-//			echo "failed to copy $sourcefile...\n";
-//		}
-//		set_transient( $transient, $xml, 120 );
-//	}
-
-	
-//	if (($date !== $options['hour']) || (!file_exists($filename))) {
-//		update_option($options['hour'], $date);
-//		echo "ran<br>";
-//		
-//		$sourcefile = "http://erikberg.com/mlb/standings.xml";
-//		
-//		if (!download2($sourcefile, $filename)) {
-//			echo "failed to copy $sourcefile...\n";
-//		}
-//	}
-	
-	//$xml = simplexml_load_file($filename);
 	$xml = simplexml_load_string($options['xml']);
-	
 	$type = $xml->xpath("//standing/standing-metadata/sports-content-codes/sports-content-code/@code-type");
 	$key = $xml->xpath("//standing/standing-metadata/sports-content-codes/sports-content-code/@code-key");
-	
 	for ($i = 0; $i < 12; $i++) {
 		if (($type[$i]=="division") && ($key[$i]==str_replace("-",".",$options['division']))){
 			$x = (($i+1)/2)-1;
@@ -116,86 +69,35 @@ add_action('admin_init', 'MLBStandings_init' );
 add_action('admin_menu', 'MLBStandings_add_options_page');
 add_filter('plugin_action_links', 'MLBStandings_plugin_action_links', 10, 2);
 
-
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: register_activation_hook(__FILE__, 'MLBStandings_add_defaults')
-// ------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE PLUGIN IS ACTIVATED. IF THERE ARE NO THEME OPTIONS
-// CURRENTLY SET, OR THE USER HAS SELECTED THE CHECKBOX TO RESET OPTIONS TO THEIR
-// DEFAULTS THEN THE OPTIONS ARE SET/RESET.
-//
-// OTHERWISE, THE PLUGIN OPTIONS REMAIN UNCHANGED.
-// ------------------------------------------------------------------------------
-
-// Define default option settings
 function MLBStandings_add_defaults() {
 	$tmp = get_option('MLBStandings_options');
     if(!is_array($tmp)) {
 		//delete_option('MLBStandings_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
 		$arr = array(	"division" => "MLB-NL-E",
 						"team" => "Mets",
-//						"hour" => date('h', time()),
-//						"timestamp" => "Wed, 9 May 2012 11:05:11 GMT",
 						"xml" => "" );
 		update_option('MLBStandings_options', $arr);
 	}
-//	if (!download2()) {
-//		echo "failed to copy $sourcefile...\n";
-//	}
 }
 
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: add_action('admin_init', 'MLBStandings_init' )
-// ------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE 'admin_init' HOOK FIRES, AND REGISTERS YOUR PLUGIN
-// SETTING WITH THE WORDPRESS SETTINGS API. YOU WON'T BE ABLE TO USE THE SETTINGS
-// API UNTIL YOU DO.
-// ------------------------------------------------------------------------------
-
-// Init plugin options to white list our options
 function MLBStandings_init(){
-//	register_setting( 'MLBStandings_plugin_options', 'MLBStandings_options', 'validate' );
 	register_setting( 'MLBStandings_plugin_options', 'MLBStandings_options' );
 }
 
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: add_action('admin_menu', 'MLBStandings_add_options_page');
-// ------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE 'admin_menu' HOOK FIRES, AND ADDS A NEW OPTIONS
-// PAGE FOR YOUR PLUGIN TO THE SETTINGS MENU.
-// ------------------------------------------------------------------------------
-
-// Add menu page
 function MLBStandings_add_options_page() {
 	add_options_page('MLB Standings Options Page', 'MLB Standings', 'manage_options', __FILE__, 'MLBStandings_render_form');
 	
 }
 
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION SPECIFIED IN: add_options_page()
-// ------------------------------------------------------------------------------
-// THIS FUNCTION IS SPECIFIED IN add_options_page() AS THE CALLBACK FUNCTION THAT
-// ACTUALLY RENDER THE PLUGIN OPTIONS FORM AS A SUB-MENU UNDER THE EXISTING
-// SETTINGS ADMIN MENU.
-// ------------------------------------------------------------------------------
-
-// Render the Plugin options form
 function MLBStandings_render_form() {
 	?>
 	<div class="wrap">
-		
-		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"><br></div>
 		<h2>MLB Standings Options</h2>
-		
-		<!-- Beginning of the Plugin Options Form -->
 		<form method="post" action="options.php">
 			<?php settings_fields('MLBStandings_plugin_options'); ?>
 			<?php if (!download2()) {echo "failed to copy $sourcefile...\n"; }; ?>
 			<?php $options = get_option('MLBStandings_options'); ?>
-
-			<!-- Table Structure Containing Form Controls -->
-			<!-- Each Plugin Option Defined on a New Table Row -->
 			<table class="form-table">
 				<tr>
 					<th scope="row">Division</th>
@@ -211,7 +113,6 @@ function MLBStandings_render_form() {
 						<span style="color:#666666;margin-left:2px;">Select the division you'd like to display on your blog.</span>
 					</td>
 				</tr>
-
 				<tr>
 					<th scope="row">Team</th>
 					<td>
@@ -262,112 +163,37 @@ function MLBStandings_render_form() {
 	<?php	
 }
 
-//function validate($input) {
-//	if (strlen($input['xml']) < 5000) {
-//		delete_transient( "standingsxml" );
-//		if (!download2()) {
-//			echo "failed to copy $sourcefile...\n";
-//		}
-//	}	
-//	return $input;
-//}
-
-// Display a Settings link on the main Plugins page
 function MLBStandings_plugin_action_links( $links, $file ) {
-
 	if ( $file == plugin_basename( __FILE__ ) ) {
 		$MLBStandings_links = '<a href="'.get_admin_url().'options-general.php?page=mlb-standings/MLBStandings.php">'.__('Settings').'</a>';
 		// make the 'Settings' link appear first
 		array_unshift( $links, $MLBStandings_links );
 	}
-
 	return $links;
 }
 
 function download2() {
 	$options = get_option('MLBStandings_options');
-	//delete_transient( "standingsxml" );
 	$transient = get_transient("standingsxml");
-	
 	if ((!$transient) || (!$options['xml']) || (strlen($options['xml'])<5000)) {
-	//if (!$transient) {
-		//echo "download needed";
-		//Include WP_Http class
 		if( !class_exists( 'WP_Http' ) ) include_once( ABSPATH . WPINC. '/class-http.php' );
-		
-		//Set source and destination files
 		$url = "http://erikberg.com/mlb/standings.xml";
 		$filename = dirname(__FILE__)."/standings.xml";
-		
-		//Instantiate the request
 		$request = new WP_Http;
-		
-		//Add parameters for request
 		$args = array();
 		$args['useragent'] = 'MLBStandings; (http://golddave.com/)';
 		$args['referer'] = get_bloginfo('url');
-		//$args['header'] = false;
-		//$args['binarytransfer'] = true;
-		//$args['returntransfer'] = true;
 		$args['timeout'] =  300;
-		//open destination file and add to parameters
-//		$outfile = fopen($filename, 'wb');
-		//$args['file'] = $outfile;
-		
-		//Execute request
 		$result = $request->request($url, $args);
-		//$body = $result[body];
-		
-		//Set XML option to the body of our request
 		if ( $options['xml'] != $result[body] ) {
 			$options['xml'] = $result[body];
 			update_option('MLBStandings_options', $options);
 		}
-		
 		set_transient("standingsxml", $filename, 60*60);
-		
-		//write the body of the file into the destination file and close
-//		fwrite($outfile, $result[body]);
-//		fclose($outfile);
-		
-		//Set XML option to the body of our request
-		//	update_option($options['xml'], $result[body]);
-		
-		//sleep(10);
 	}
-	
 	$transient = $filename;
-
-	//return true so the calling function doesn't return an error
 	return true;
 }
-
-//	// create a new curl resource
-//	$ch = curl_init();
-//	
-//	// set URL and other appropriate options
-//	curl_setopt($ch, CURLOPT_URL, $sourcefile);
-//	curl_setopt($ch, CURLOPT_USERAGENT, 'MLBStandings; (http://golddave.com/)');
-//	curl_setopt($ch, CURLOPT_REFERER, get_bloginfo('url'));
-//	curl_setopt($ch, CURLOPT_HEADER, false);
-//	curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
-//	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//	
-//	set_time_limit(300); # 5 minutes for PHP
-//	curl_setopt($ch, CURLOPT_TIMEOUT, 300); # and also for CURL
-//	
-//	$outfile = fopen($filename, 'wb');
-//	curl_setopt($ch, CURLOPT_FILE, $outfile);
-//	
-//	// grab file from URL
-//	curl_exec($ch);
-//	fclose($outfile);
-//	
-//	// close CURL resource, and free up system resources
-//	curl_close($ch);
-//	sleep(10);
-//	return true;
-//}
 
 class MLBStandings_Widget extends WP_Widget {
 
