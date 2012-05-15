@@ -1,0 +1,32 @@
+/* Standings head class. */
+#mlb_standings_head {
+	font-size: 0.8em;
+	font-weight: bold;
+}
+
+/* Standings body class. */
+#mlb_standings_body table {
+	width: 10%;
+	padding: 2px;
+	border-collapse: collapse;	
+	border-spacing: 0px;
+	border: 0;
+	font-size: 0.9em;
+}
+#mlb_standings_body th {
+	background-color: white;
+	color: #000D86;
+	padding: 2px;
+	font-weight: bold;
+	border: 0;
+}
+#mlb_standings_body td {
+	padding: 2px;
+	border: 0;
+}
+.team {
+	font-weight:bold;
+}
+.date{
+	font-size:75%;
+}
