@@ -3,7 +3,7 @@
 Plugin Name: MLB Standings
 Plugin URI: http://nothing.golddave.com/plugins/mlb-standings/
 Description: Displays the standings for a given division of MLB as either a sidebar widget or template tag.
-Version: 2.0
+Version: 2.0.1
 Author: David Goldstein
 Author URI: http://nothing.golddave.com
 */
@@ -11,7 +11,10 @@ Author URI: http://nothing.golddave.com
 /*
 Change Log
 
-1.1
+2.0.1
+  * Minor CSS change.
+
+2.0
   * Added option to highlight team in standings.
   * Added AJAX menu for team selection. Only teams from the selected division will be available in the team select box.
   * Rewrote settings page to better conform to the Wordpress settings API.

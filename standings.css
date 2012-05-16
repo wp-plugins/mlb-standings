@@ -6,7 +6,7 @@
 
 /* Standings body class. */
 #mlb_standings_body table {
-	width: 10%;
+	width: 100%;
 	padding: 2px;
 	border-collapse: collapse;	
 	border-spacing: 0px;

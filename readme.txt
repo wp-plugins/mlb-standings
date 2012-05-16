@@ -39,6 +39,9 @@ To display via template tag add the following line of code to the place you'd li
 `<?php if(function_exists(ShowMLBStandings)) : ShowMLBStandings(); endif; ?>`
 
 == Changelog ==
+= 2.0.1 =
+* Minor CSS change.
+
 = 2.0 =
 * Added option to highlight team in standings.
 * Added AJAX menu for team selection. Only teams from the selected division will be available in the team select box.
@@ -58,6 +61,9 @@ To display via template tag add the following line of code to the place you'd li
 The settings mechanism was totally rewritten for version 2.0. Go to 'Settings->MLB Standings' to set your division and team to display the standings properly again.
 
 == Upgrade Notice ==
+= 2.0.1 =
+Minor CSS change.
+
 = 2.0 =
 Added setting to highlight a team, removed cURL dependency and more under the hood optimizations.
 
