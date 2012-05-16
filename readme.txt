@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: baseball, standings, sports, major league baseball, mlb
 Requires at least: 3.0
 Tested up to: 3.3.2
-Stable tag: 2.0
+Stable tag: 2.0.1
 
 Display the standings for a division of <a href="http://mlb.com" target="_blank">Major League Baseball (MLB)</a> on your blog.
 
