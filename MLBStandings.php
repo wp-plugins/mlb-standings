@@ -3,13 +3,19 @@
 Plugin Name: MLB Standings
 Plugin URI: http://nothing.golddave.com/plugins/mlb-standings/
 Description: Displays the standings for a given division of MLB as either a sidebar widget or template tag.
-Version: 2.0.1
+Version: 2.0.3
 Author: David Goldstein
 Author URI: http://nothing.golddave.com
 */
 
 /*
 Change Log
+
+2.0.3
+  * Compatibility changes for NBA STandings plugin.
+
+2.0.2
+  * Added compression support for XML download.
 
 2.0.1
   * Minor CSS change.
@@ -30,7 +36,7 @@ Change Log
 
 function ShowMLBStandings() {
 	$options = get_option('MLBStandings_options');
-	if (!download2()) {
+	if (!download_mlb()) {
 		echo "failed to copy $sourcefile...\n";
 	}
 	$xml = simplexml_load_string($options['xml']);
@@ -41,13 +47,13 @@ function ShowMLBStandings() {
 			$x = (($i+1)/2)-1;
 			$division = $xml->xpath("/sports-content/standing");
 			?>
-			<link rel="stylesheet" href="<?php bloginfo('wpurl') ?>/wp-content/plugins/mlb-standings/standings.css" type="text/css" media="screen" />
+			<link rel="stylesheet" href="<?php bloginfo('wpurl') ?>/wp-content/plugins/mlb-standings/mlbstandings.css" type="text/css" media="screen" />
 			<div id="mlb_standings_body">
 			<?php
 			echo "<table><tr><th align='left'>Team</th><th align='right'>W</th><th align='right'>L</th><th align='right'>Pct.</th><th align='right'>GB</th></tr>";
 			for ($j = 0; $j < count($division[$x]->team); $j++) {
 				if ($division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last == $options['team']) {
-					echo "<tr class='team'><td align='left'>".$division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->wins."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->losses."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->{'winning-percentage'}."</td>";
+					echo "<tr class='mlbteam'><td align='left'>".$division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->wins."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->losses."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->{'winning-percentage'}."</td>";
 				} else {
 					echo "<tr><td align='left'>".$division[$x]->team[$j]->{'team-metadata'}->name->attributes()->last."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->wins."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->losses."</td><td align='right'>".$division[$x]->team[$j]->{'team-stats'}->{'outcome-totals'}->attributes()->{'winning-percentage'}."</td>";
 				}
@@ -61,8 +67,8 @@ function ShowMLBStandings() {
 			$timestamp = $xml->{'sports-metadata'}->attributes()->{'date-time'};
 			putenv("TZ=US/Pacific");
 			$time=date("g:i A T", mktime(substr($timestamp,11,2),substr($timestamp,14,2),substr($timestamp,17,2)));			
-			//echo "<p class='date'>Last updated: ".substr($timestamp,5,2)."/".substr($timestamp,8,2)."/".substr($timestamp,0,4)." - ".$time."</p></div>";
-			echo "<p class='date'>Last updated: ".substr($timestamp,5,2)."/".substr($timestamp,8,2)."/".substr($timestamp,0,4)."</p></div>";
+			//echo "<p class='mlbdate'>Last updated: ".substr($timestamp,5,2)."/".substr($timestamp,8,2)."/".substr($timestamp,0,4)." - ".$time."</p></div>";
+			echo "<p class='mlbdate'>Last updated: ".substr($timestamp,5,2)."/".substr($timestamp,8,2)."/".substr($timestamp,0,4)."</p></div>";
 		}
 	}
 }
@@ -99,7 +105,7 @@ function MLBStandings_render_form() {
 		<h2>MLB Standings Options</h2>
 		<form method="post" action="options.php">
 			<?php settings_fields('MLBStandings_plugin_options'); ?>
-			<?php if (!download2()) {echo "failed to copy $sourcefile...\n"; }; ?>
+			<?php if (!download_mlb()) {echo "failed to copy $sourcefile...\n"; }; ?>
 			<?php $options = get_option('MLBStandings_options'); ?>
 			<table class="form-table">
 				<tr>
@@ -175,24 +181,27 @@ function MLBStandings_plugin_action_links( $links, $file ) {
 	return $links;
 }
 
-function download2() {
+function download_mlb() {
 	$options = get_option('MLBStandings_options');
-	$transient = get_transient("standingsxml");
+	$transient = get_transient("mlbstandingsxml");
 	if ((!$transient) || (!$options['xml']) || (strlen($options['xml'])<5000)) {
 		if( !class_exists( 'WP_Http' ) ) include_once( ABSPATH . WPINC. '/class-http.php' );
 		$url = "http://erikberg.com/mlb/standings.xml";
 		$filename = dirname(__FILE__)."/standings.xml";
 		$request = new WP_Http;
 		$args = array();
-		$args['useragent'] = 'MLBStandings; (http://golddave.com/)';
+		$args['useragent'] = 'MLBStandings/2.0.3; (support@golddave.com)';
 		$args['referer'] = get_bloginfo('url');
 		$args['timeout'] =  300;
+		$args['compress'] =  TRUE;
+		$args['sslverify'] =  FALSE;
+		//$args['headers'] =  "Authorization: Bearer 479f3565-fc75-42fb-bf05-63e74c83ba7e";
 		$result = $request->request($url, $args);
 		if ( $options['xml'] != $result[body] ) {
 			$options['xml'] = $result[body];
 			update_option('MLBStandings_options', $options);
 		}
-		set_transient("standingsxml", $filename, 60*60);
+		set_transient("mlbstandingsxml", $filename, 60*60);
 	}
 	$transient = $filename;
 	return true;
