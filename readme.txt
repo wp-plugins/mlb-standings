@@ -3,7 +3,7 @@ Contributors: David Goldstein
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3396118
 Tags: baseball, standings, sports, major league baseball, mlb
 Requires at least: 3.0
-Tested up to: 3.8
+Tested up to: 4.2.1
 Stable tag: 2.0.3
 
 Display the standings for a division of <a href="http://mlb.com" target="_blank">Major League Baseball (MLB)</a> on your blog.
@@ -40,7 +40,7 @@ To display via template tag add the following line of code to the place you'd li
 
 == Changelog ==
 = 2.0.3 =
-* Compatibility changes for NBA STandings plugin.
+* Compatibility changes for NBA Standings plugin.
 
 = 2.0.2 =
 * Added compression support for XML download.
